@@ -1,0 +1,98 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: otel-collector
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://open-telemetry.github.io/opentelemetry-helm-charts
+    chart: opentelemetry-collector
+    targetRevision: "0.115.0"
+    helm:
+      releaseName: otel-collector
+      values: |
+        mode: deployment
+        replicaCount: 1
+
+        image:
+          repository: otel/opentelemetry-collector-contrib
+          tag: "0.153.0"
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+
+        extraEnvs:
+          - name: NEW_RELIC_LICENSE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: otel-collector-secrets
+                key: NEW_RELIC_LICENSE_KEY
+
+        ports:
+          metrics:
+            enabled: true
+            containerPort: 8889
+            servicePort: 8889
+            protocol: TCP
+
+        serviceMonitor:
+          enabled: true
+          extraLabels: {}
+
+        config:
+          receivers:
+            otlp:
+              protocols:
+                grpc:
+                  endpoint: 0.0.0.0:4317
+                http:
+                  endpoint: 0.0.0.0:4318
+
+          processors:
+            batch: {}
+            memory_limiter:
+              check_interval: 5s
+              limit_mib: 200
+              spike_limit_mib: 50
+
+          exporters:
+            prometheus:
+              endpoint: 0.0.0.0:8889
+
+            loki:
+              endpoint: http://loki:3100/loki/api/v1/push
+
+            otlp/newrelic:
+              endpoint: otlp.nr-data.net:4317
+              headers:
+                api-key: ${env:NEW_RELIC_LICENSE_KEY}
+
+          service:
+            pipelines:
+              traces:
+                receivers: [otlp]
+                processors: [memory_limiter, batch]
+                exporters: [otlp/newrelic]
+              metrics:
+                receivers: [otlp]
+                processors: [memory_limiter, batch]
+                exporters: [prometheus, otlp/newrelic]
+              logs:
+                receivers: [otlp]
+                processors: [memory_limiter, batch]
+                exporters: [loki, otlp/newrelic]
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
