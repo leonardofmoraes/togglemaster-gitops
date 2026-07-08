@@ -26,6 +26,11 @@ spec:
             datasources:
               enabled: true
               label: grafana_datasource
+          extraSecretMounts:
+            - name: alerting-provisioning
+              secretName: grafana-alerting-provisioning
+              mountPath: /etc/grafana/provisioning/alerting
+              readOnly: true
 
         prometheus:
           prometheusSpec:
