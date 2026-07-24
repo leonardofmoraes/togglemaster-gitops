@@ -41,11 +41,11 @@ spec:
             servicePort: 8889
             protocol: TCP
 
-        serviceMonitor:
-          enabled: true
-          extraLabels: {}
-
         config:
+          extensions:
+            health_check:
+              endpoint: 0.0.0.0:13133
+
           receivers:
             otlp:
               protocols:
@@ -71,6 +71,7 @@ spec:
                 api-key: ${env:NEW_RELIC_LICENSE_KEY}
 
           service:
+            extensions: [health_check]
             telemetry:
               metrics:
                 level: "none"
