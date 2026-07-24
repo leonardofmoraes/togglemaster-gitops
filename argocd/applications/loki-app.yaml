@@ -14,7 +14,7 @@ spec:
       values: |
         loki:
           enabled: true
-          isDefaultDatasource: false # o datasource é registrado via ConfigMap (sidecar do Grafana)
+          isDefault: false
           persistence:
             enabled: false
           resources:
