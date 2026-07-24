@@ -41,14 +41,10 @@ spec:
             servicePort: 8889
             protocol: TCP
 
-        serviceMonitor:
-          enabled: true
-          extraLabels: {}
-
-        # Desativa a sintaxe legada de telemetria interna que gerava o erro 'migration.MetricsConfigV030'
+        # Desativa a injeção automática de telemetria legada pelo Helm Chart
         telemetry:
           metrics:
-            address: ""
+            enabled: false
 
         config:
           receivers:
