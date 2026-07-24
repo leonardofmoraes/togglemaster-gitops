@@ -45,6 +45,11 @@ spec:
           enabled: true
           extraLabels: {}
 
+        # Desativa a sintaxe legada de telemetria interna que gerava o erro 'migration.MetricsConfigV030'
+        telemetry:
+          metrics:
+            address: ""
+
         config:
           receivers:
             otlp:
@@ -57,9 +62,9 @@ spec:
           processors:
             batch: {}
             memory_limiter:
-              check_interval: 5s
-              limit_mib: 200
-              spike_limit_mib: 50
+              check_interval: 1s
+              limit_percentage: 75
+              spike_limit_percentage: 20
 
           exporters:
             prometheus:
