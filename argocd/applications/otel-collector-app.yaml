@@ -41,10 +41,9 @@ spec:
             servicePort: 8889
             protocol: TCP
 
-        # Desativa a injeção automática de telemetria legada pelo Helm Chart
-        telemetry:
-          metrics:
-            enabled: false
+        serviceMonitor:
+          enabled: true
+          extraLabels: {}
 
         config:
           receivers:
@@ -72,6 +71,9 @@ spec:
                 api-key: ${env:NEW_RELIC_LICENSE_KEY}
 
           service:
+            telemetry:
+              metrics:
+                level: "none"
             pipelines:
               traces:
                 receivers: [otlp]
