@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: evaluation-service
+  namespace: togglemaster
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: evaluation-service
+  template:
+    metadata:
+      labels:
+        app: evaluation-service
+    spec:
+      containers:
+        - name: evaluation-service
+          image: 407098684727.dkr.ecr.us-east-1.amazonaws.com/togglemaster-dev-evaluation-service:latest
+          ports:
+            - containerPort: 8004
+          env:
+            - name: PORT
+              value: "8004"
+            - name: REDIS_URL
+              value: "redis://togglemaster-dev-redis.1csi9s.0001.use1.cache.amazonaws.com:6379"
+            - name: FLAG_SERVICE_URL
+              value: "http://flag-service.togglemaster.svc.cluster.local:8002"
+            - name: TARGETING_SERVICE_URL
+              value: "http://targeting-service.togglemaster.svc.cluster.local:8003"
+            - name: SERVICE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: togglemaster-secrets
+                  key: SERVICE_API_KEY
+            - name: AWS_SQS_URL
+              value: "https://sqs.us-east-1.amazonaws.com/407098684727/togglemaster-dev-queue"
+            - name: AWS_REGION
+              value: "us-east-1"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: togglemaster-secrets
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: togglemaster-secrets
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: AWS_SESSION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: togglemaster-secrets
+                  key: AWS_SESSION_TOKEN
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "otel-collector-opentelemetry-collector.monitoring.svc.cluster.local:4317"
+            - name: SERVICE_VERSION
+              value: "1.0.0"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: evaluation-service
+  namespace: togglemaster
+spec:
+  selector:
+    app: evaluation-service
+  ports:
+    - port: 8004
+      targetPort: 8004
